@@ -1,0 +1,58 @@
+# prerequisites:
+# pip install Pillow
+
+from PIL import Image
+import numpy as np
+import sys
+import os
+
+from numpy.lib.function_base import average
+
+if len(sys.argv) <= 1:
+    print(f"Usage: {sys.argv[0]} <img.jpg>")
+    sys.argv = ['', '5.jpg']
+    #exit()
+
+img_file_name = sys.argv[1]
+image = Image.open(img_file_name)
+in_image = np.asarray(image)
+
+width = 11
+if (width % 2 == 0):
+    width += 1
+
+nrows, ncols, colors = in_image.shape
+ncols = (ncols // width) * width
+res_image = np.ones((nrows, ncols)) * 255
+
+def get_darkness(in_data):
+    """
+    sum_col = 0
+    count_width = 0
+    for i in in_data:
+        for color in i:
+            sum_col += color
+            count_width += 1
+    average_colors = sum_col/count_width
+    """
+    return 255 - in_data.mean()
+
+def to_range(darkness, width):
+    center = (width + 1) // 2 - 1
+    shift = int(round(darkness / 255 * ((width + 1) // 2 - 1)))
+    return center - shift, center + shift
+
+gray = 125
+for row in range(nrows):
+    for col in range(ncols // width):
+        first, last = col * width, col * width + width
+        darkness = get_darkness(in_image[row][first : last + 1])
+        first, last = to_range(darkness, width)
+        #res_image[row, col * width + first : col * width + last + 1] = 0 
+        res_image[row, col * width + first] = gray
+        res_image[row, col * width + last] = gray
+PIL_image = Image.fromarray(np.uint8(res_image))
+filename, file_extension = os.path.splitext(img_file_name)
+PIL_image.save(f'{filename}_res{file_extension}')
+#for 
+print(res_image.shape)
